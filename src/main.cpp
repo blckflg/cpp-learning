@@ -4,16 +4,15 @@
 #include <string>
 #include <algorithm>
 #include <cstdlib>
-using namespace std;
 
 size_t utf8_length(const std::string& str) {
-    size_t count = 0;
+    size_t size = 0;
     for (unsigned char c : str) {
         if ((c & 0b11000000) != 0b10000000) {
-            ++count;
+            ++size;
         }
     }
-    return count;
+    return size;
 }
 
 int main() {
@@ -23,49 +22,57 @@ int main() {
     system("chcp 65001 > nul");
 #endif
 
-    vector<string> names;
-    vector<string> namesmaxlength;
+    std::vector<std::string> names;
+    std::vector<std::string> namesmaxlength;
 
     //Собираем имена от пользователя
-    cout << "=== Программа сбора имён ===\n";
-    cout << "Вводите имена (пустая строка - завершение):\n";
-    string name;
-    while (getline(cin, name))
-    {
+    std::cout << "=== Программа сбора имён ===\n";
+    std::cout << "Вводите имена (пустая строка - завершение):\n";
+    std::string name;
+    while (std::getline(std::cin, name)) {
         if (name.empty()) break;
-        names.push_back(name);
+        names.emplace_back(std::move(name)); // чуть быстрее
+    }
+
+    if (names.empty()) {
+        std::cout << "\nВы не ввели ни одного имени.\n";
+        std::cin.get();
+        return 0;
     }
 
     //Сортируем и выводим
-    ranges::sort(names); //C++20
+    std::ranges::sort(names); //C++20
 
-    cout << "\nОтсортированный список(" << names.size() << " чел.):\n";
-    for (const auto& n : names)
-    {
-        //Заполняем дополнительный вектор для самых длинных имен
-        if (namesmaxlength.empty() ) {
-            namesmaxlength.push_back(n);
-        }
-        else if (utf8_length(n) >= utf8_length(namesmaxlength[0])) {
-            if (utf8_length(n) > utf8_length(namesmaxlength[0])) { namesmaxlength.clear(); }
-            namesmaxlength.push_back(n);
-        }
-
-        cout << "- " << n << '\n';
+   std::cout << "\nОтсортированный список (" << names.size() << " чел.):\n";
+    for (const auto& n : names) {
+        std::cout << "- " << n << '\n';
     }
 
-    if (namesmaxlength.size()>1) {
-        cout << "Самое длинное имя (" << utf8_length(namesmaxlength[0]) << " символов):\n";
-        cout << "- " << namesmaxlength[0]<<'\n';
-    }
-    else {
-        cout << "Самые длинные имена (" << utf8_length(namesmaxlength[0]) << " символов):\n";
-        for (const auto& n : namesmaxlength) {
-            cout << "- " << n << '\n';
+    // Правильный поиск самых длинных имён — отдельно!
+    size_t max_len = 0;
+    std::vector<std::string> longest;
+
+    for (const auto& n : names) {
+        size_t len = utf8_length(n);
+        if (len > max_len) {
+            max_len = len;
+            longest = {n};
+        } else if (len == max_len) {
+            longest.push_back(n);
         }
     }
 
+    std::cout << "\n";
+    if (longest.size() == 1) {
+        std::cout << "Самое длинное имя (" << max_len << " символов):\n";
+    } else {
+        std::cout << "Самые длинные имена (" << max_len << " символов):\n";
+    }
+    for (const auto& n : longest) {
+        std::cout << "- " << n << '\n';
+    }
 
-    system("pause");
+    std::cout << "\nНажмите Enter для выхода...\n";
+    std::cin.get();
     return 0;
 }
